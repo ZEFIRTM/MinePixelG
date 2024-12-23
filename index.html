@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | MinePixel</title>
+    <title>Unity Web Player | MinePixel</title>
   </head>
   <body style="text-align: center; padding: 0; border: 0; margin: 0;">
     <canvas id="unity-canvas" width=1080 height=1920 tabindex="-1" style="width: 1080px; height: 1920px; background: url('Build/TgWebGL.jpg') center / cover"></canvas>
@@ -25,6 +25,7 @@
       }
 
       createUnityInstance(document.querySelector("#unity-canvas"), {
+        arguments: [],
         dataUrl: "Build/TgWebGL.data.unityweb",
         frameworkUrl: "Build/TgWebGL.framework.js.unityweb",
         codeUrl: "Build/TgWebGL.wasm.unityweb",
