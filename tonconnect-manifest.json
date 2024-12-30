@@ -1,14 +1,17 @@
 {
     "url": "https://zefirtm.github.io/MinePixelG/",
     "name": "MinePixel",
-    "iconUrl": "https://zefirtm.github.io/MinePixelG/Assets/Textures/Other/MineCoin.png",
-    "termsOfUseUrl": "https://zefirtm.github.io/MinePixelG/terms-of-use.html",
-    "privacyPolicyUrl": "https://zefirtm.github.io/MinePixelG/privacy-policy.html",
     
     "items": [
         {
-            "name": "ton_addr",
-            "address": "EQDrjaLahLkMB-MCpHIG2xbPt3aCkWt7OuEPYvwUL4V_YGMW"
+            "name": "Dynamite",
+            "description": "Purchase dynamite to clear pixels faster",
+            "price": {
+                "currency": "TON",
+                "amount": "0.1"
+            }
         }
-    ]
+    ],
+
+    "telegram_bot": "@minepixels_bot"
 } 
