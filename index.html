@@ -7,6 +7,42 @@
     <!-- Базовые скрипты -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="Build/TgWebGL.loader.js"></script>
+    <script>
+        // Создаем заглушку для TON Connect
+        (function() {
+            // Конструктор заглушки
+            function TonConnectUIStub(config) {
+                this.config = config;
+                console.log('TON Connect stub created with config:', config);
+                return this;
+            }
+
+            // Методы заглушки
+            TonConnectUIStub.prototype.init = function() {
+                console.log('TON Connect stub initialized');
+                return true;
+            };
+
+            TonConnectUIStub.prototype.connectWallet = async function() {
+                console.log('TON Connect stub: connectWallet called');
+                return null;
+            };
+
+            TonConnectUIStub.prototype.disconnect = async function() {
+                console.log('TON Connect stub: disconnect called');
+                return true;
+            };
+
+            TonConnectUIStub.prototype.onStatusChange = function(callback) {
+                console.log('TON Connect stub: onStatusChange registered');
+            };
+
+            // Создаем глобальный объект
+            window.TON_CONNECT_UI = {
+                TonConnectUI: TonConnectUIStub
+            };
+        })();
+    </script>
     <style>
         body { 
             margin: 0; 
@@ -122,25 +158,6 @@
             }
         }
 
-        // Создаем заглушку для TON Connect
-        window.TON_CONNECT_UI = {
-            init: function() {
-                addDebugInfo('TON Connect stub initialized');
-                return true;
-            },
-            connectWallet: async function() {
-                addDebugInfo('TON Connect stub: connectWallet called');
-                return null;
-            },
-            disconnect: async function() {
-                addDebugInfo('TON Connect stub: disconnect called');
-                return true;
-            },
-            onStatusChange: function(callback) {
-                addDebugInfo('TON Connect stub: onStatusChange registered');
-            }
-        };
-
         // Глобальные переменные
         window.telegramUserData = null;
         window.walletConnectionPromise = null;
@@ -180,14 +197,20 @@
                 'https://cdn.jsdelivr.net/npm/tonweb@0.0.60/dist/tonweb.js'
             ];
             
+            let loadedCount = 0;
             scripts.forEach(src => {
                 const script = document.createElement('script');
                 script.src = src;
                 script.onload = () => {
                     addDebugInfo('Loaded: ' + src);
-                    if (src.includes('@tonconnect/ui')) {
+                    loadedCount++;
+                    if (loadedCount === scripts.length) {
                         initRealTonConnect();
                     }
+                };
+                script.onerror = (error) => {
+                    addDebugInfo('Error loading script: ' + src);
+                    console.error('Script load error:', error);
                 };
                 document.head.appendChild(script);
             });
@@ -196,14 +219,11 @@
         function initRealTonConnect() {
             try {
                 if (typeof TonConnectUI !== 'undefined') {
-                    window.TON_CONNECT_UI = new TonConnectUI({
-                        manifestUrl: 'tonconnect-manifest.json',
-                        buttonRootId: 'connect-button',
-                        uiPreferences: {
-                            theme: 'DARK'
-                        }
-                    });
-                    addDebugInfo('Real TON Connect initialized');
+                    // Заменяем заглушку на реальный конструктор
+                    window.TON_CONNECT_UI.TonConnectUI = TonConnectUI;
+                    addDebugInfo('Real TON Connect constructor replaced stub');
+                } else {
+                    addDebugInfo('Warning: TonConnectUI is still undefined');
                 }
             } catch (error) {
                 addDebugInfo('Error initializing real TON Connect: ' + error);
