@@ -1,9 +1,17 @@
 {
-    "url": "https://zefirtm.github.io",
+    "url": "https://zefirtm.github.io/MinePixelG/",
     "name": "MinePixel",
-    "iconUrl": "https://zefirtm.github.io/icon.png",
-    "termsOfUseUrl": "https://zefirtm.github.io",
-    "privacyPolicyUrl": "https://zefirtm.github.io",
-    "manifest_version": 1,
-    "version": "1.0.0"
+    
+    "items": [
+        {
+            "name": "Dynamite",
+            "description": "Purchase dynamite to clear pixels faster",
+            "price": {
+                "currency": "TON",
+                "amount": "0.1"
+            }
+        }
+    ],
+
+    "telegram_bot": "@minepixels_bot"
 } 
