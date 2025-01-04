@@ -2,12 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Unity WebGL Player</title>
     <style>
         body { 
             margin: 0; 
+            padding: 0;
             overflow: hidden; 
             background-color: #000000; 
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        #gameContainer {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #unity-canvas {
+            width: 100%;
+            height: 100%;
+            background: #000000;
         }
         #loadingScreen {
             position: fixed;
@@ -76,7 +95,9 @@
         </div>
     </div>
 
-    <div id="gameContainer" style="width: 100%; height: 100%;"></div>
+    <div id="gameContainer">
+        <canvas id="unity-canvas"></canvas>
+    </div>
     <div id="connect-button"></div>
     <input id="mobileInputField" type="text" />
 
@@ -146,7 +167,8 @@
             addDebugInfo('Creating Unity instance...');
             
             try {
-                window.unityInstance = await createUnityInstance(document.querySelector("#gameContainer"), {
+                const canvas = document.querySelector("#unity-canvas");
+                const config = {
                     dataUrl: "Build/TgWebGL.data.unityweb",
                     frameworkUrl: "Build/TgWebGL.framework.js.unityweb",
                     codeUrl: "Build/TgWebGL.wasm.unityweb",
@@ -156,9 +178,17 @@
                     productVersion: "0.1.0",
                     showBanner: (msg) => {
                         addDebugInfo('Unity banner: ' + msg);
+                    },
+                    // Добавляем специфичные настройки WebGL
+                    devicePixelRatio: 1,
+                    webglContextAttributes: {
+                        preserveDrawingBuffer: true,
+                        powerPreference: "high-performance",
+                        failIfMajorPerformanceCaveat: false
                     }
-                });
+                };
 
+                window.unityInstance = await createUnityInstance(canvas, config);
                 addDebugInfo('Unity initialized successfully');
                 document.getElementById("loadingScreen").style.display = 'none';
 
@@ -167,6 +197,12 @@
                 
             } catch (error) {
                 addDebugInfo('Unity initialization error: ' + error);
+                // Добавляем дополнительную информацию об ошибке
+                if (error instanceof Error) {
+                    addDebugInfo('Error name: ' + error.name);
+                    addDebugInfo('Error message: ' + error.message);
+                    addDebugInfo('Error stack: ' + error.stack);
+                }
             }
         }
 
