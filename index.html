@@ -7,6 +7,45 @@
     <!-- Базовые скрипты -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="Build/TgWebGL.loader.js"></script>
+    <!-- TON Connect скрипты -->
+    <script>
+        // Функция для загрузки скрипта с проверкой
+        function loadScriptWithRetry(src, retries = 3) {
+            return new Promise((resolve, reject) => {
+                function attemptLoad(attemptsLeft) {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.async = false;
+                    script.onload = resolve;
+                    script.onerror = () => {
+                        if (attemptsLeft > 0) {
+                            setTimeout(() => attemptLoad(attemptsLeft - 1), 1000);
+                        } else {
+                            reject(new Error(`Failed to load script: ${src}`));
+                        }
+                    };
+                    document.head.appendChild(script);
+                }
+                attemptLoad(retries);
+            });
+        }
+
+        // Загружаем скрипты последовательно
+        async function loadTonConnectScripts() {
+            try {
+                await loadScriptWithRetry('https://unpkg.com/@tonconnect/sdk@2.1.3/dist/tonconnect-sdk.min.js');
+                await loadScriptWithRetry('https://unpkg.com/@tonconnect/ui@1.0.0/dist/tonconnect-ui.min.js');
+                await loadScriptWithRetry('https://unpkg.com/tonweb@0.0.60/dist/tonweb.js');
+                console.log('All TON Connect scripts loaded successfully');
+            } catch (error) {
+                console.error('Error loading TON Connect scripts:', error);
+                throw error;
+            }
+        }
+
+        // Загружаем скрипты сразу
+        loadTonConnectScripts();
+    </script>
     <style>
         body { 
             margin: 0; 
@@ -118,17 +157,6 @@
         window.telegramUserData = null;
         window.walletConnectionPromise = null;
 
-        // Функция для загрузки скрипта
-        function loadScript(src) {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = resolve;
-                script.onerror = reject;
-                document.body.appendChild(script);
-            });
-        }
-
         // Функция для отладки
         function addDebugInfo(text) {
             const debugDiv = document.getElementById('debugInfo');
@@ -139,28 +167,32 @@
             }
         }
 
+        // Функция для проверки загрузки скриптов
+        function checkTonConnectAvailability(maxAttempts = 10) {
+            return new Promise((resolve, reject) => {
+                let attempts = 0;
+                const check = () => {
+                    if (typeof TonConnectUI !== 'undefined') {
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        reject(new Error('TonConnectUI not available after maximum attempts'));
+                    } else {
+                        attempts++;
+                        setTimeout(check, 500);
+                    }
+                };
+                check();
+            });
+        }
+
         // Функция для инициализации TON Connect
         async function initializeTonConnect() {
             if (window.tonConnectInitialized) return;
 
             try {
-                addDebugInfo('Loading TON Connect scripts...');
+                addDebugInfo('Waiting for TON Connect scripts...');
+                await checkTonConnectAvailability();
                 
-                // Загружаем скрипты последовательно
-                await loadScript('https://unpkg.com/@tonconnect/sdk@2.1.3/dist/tonconnect-sdk.min.js');
-                addDebugInfo('TON Connect SDK loaded');
-                
-                await loadScript('https://unpkg.com/@tonconnect/ui@1.0.0/dist/tonconnect-ui.min.js');
-                addDebugInfo('TON Connect UI loaded');
-                
-                await loadScript('https://unpkg.com/tonweb@0.0.60/dist/tonweb.js');
-                addDebugInfo('TonWeb loaded');
-
-                // Проверяем, что TonConnectUI доступен
-                if (typeof TonConnectUI === 'undefined') {
-                    throw new Error('TonConnectUI is not defined after loading');
-                }
-
                 addDebugInfo('Initializing TON Connect...');
                 window.TON_CONNECT_UI = new TonConnectUI({
                     manifestUrl: 'tonconnect-manifest.json',
@@ -191,7 +223,10 @@
                     window.unityInstance.SendMessage('TonConnectManager', 'HandleInitialization', 'true');
                 }
             } catch (error) {
-                addDebugInfo('Error initializing TON Connect: ' + error);
+                addDebugInfo('Error initializing TON Connect: ' + error.message);
+                if (error.stack) {
+                    addDebugInfo('Error stack: ' + error.stack);
+                }
                 throw error;
             }
         }
@@ -227,13 +262,9 @@
                 setInterval(checkTelegramData, 1000);
                 
             } catch (error) {
-                addDebugInfo('Unity initialization error: ' + error);
-                if (error instanceof Error) {
-                    addDebugInfo('Error details: ' + JSON.stringify({
-                        name: error.name,
-                        message: error.message,
-                        stack: error.stack
-                    }));
+                addDebugInfo('Unity initialization error: ' + error.message);
+                if (error.stack) {
+                    addDebugInfo('Error stack: ' + error.stack);
                 }
             }
         }
@@ -242,10 +273,14 @@
         window.addEventListener('load', async function() {
             addDebugInfo('Page loaded, starting initialization...');
             try {
+                await checkTonConnectAvailability();
                 await initializeTonConnect();
                 await loadUnity();
             } catch (error) {
-                addDebugInfo('Initialization error: ' + error);
+                addDebugInfo('Initialization error: ' + error.message);
+                if (error.stack) {
+                    addDebugInfo('Error stack: ' + error.stack);
+                }
             }
         });
 
